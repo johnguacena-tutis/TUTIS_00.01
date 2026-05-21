@@ -5,6 +5,7 @@ import { Eye, Pencil, UserPlus, ChevronDown } from 'lucide-react'
 import { useTheme } from './ThemeProvider'
 import { can, type Permission } from '@/lib/permissions'
 import Accordion from './Accordion'
+import StatusFilter, { offeringPills, type OfferingFilter } from './StatusFilter'
 
 type Offering = {
   offering_version_id: number
@@ -16,6 +17,7 @@ type Offering = {
   start_timestamp: string | null
   end_timestamp: string | null
   trainer_name: string | null
+  archived: boolean
 }
 
 const allActions: { label: string; icon: React.ReactNode; color: string; permission: Permission }[] = [
@@ -36,10 +38,19 @@ type Filters = {
 const formatDate = (ts: string | null) =>
   ts ? new Date(ts).toLocaleDateString('en-AU') : '—'
 
-export default function OfferingsTable({ offerings }: { offerings: Offering[] }) {
+const now = new Date()
+
+export default function OfferingsTable({
+  offerings,
+  counts,
+}: {
+  offerings: Offering[]
+  counts: Record<OfferingFilter, number>
+}) {
   const { role } = useTheme()
   const actions = allActions.filter((a) => can(role, a.permission))
   const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [activeFilter, setActiveFilter] = useState<OfferingFilter>('active')
   const [filters, setFilters] = useState<Filters>({
     code: '',
     title: '',
@@ -54,7 +65,14 @@ export default function OfferingsTable({ offerings }: { offerings: Offering[] })
   const setFilter = (key: keyof Filters, value: string) =>
     setFilters((prev) => ({ ...prev, [key]: value }))
 
-  const filtered = offerings.filter((o) =>
+  const statusFiltered = offerings.filter((o) => {
+    if (activeFilter === 'archived')  return o.archived
+    if (activeFilter === 'completed') return !o.archived && o.end_timestamp !== null && new Date(o.end_timestamp) < now
+    if (activeFilter === 'active')    return !o.archived && (o.end_timestamp === null || new Date(o.end_timestamp) >= now)
+    return true
+  })
+
+  const filtered = statusFiltered.filter((o) =>
     (o.code ?? '').toLowerCase().includes(filters.code.toLowerCase()) &&
     (o.title ?? '').toLowerCase().includes(filters.title.toLowerCase()) &&
     String(o.number_enrolled ?? '').includes(filters.number_enrolled) &&
@@ -85,6 +103,19 @@ export default function OfferingsTable({ offerings }: { offerings: Offering[] })
   ]
 
   return (
+    <div>
+      <div className="mb-4 flex items-center justify-between">
+        <StatusFilter
+          pills={offeringPills}
+          current={activeFilter}
+          counts={counts}
+          onChange={(f) => { setActiveFilter(f as OfferingFilter); setExpandedId(null) }}
+        />
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          {filtered.length} records
+        </p>
+      </div>
+
     <div
       className="rounded-xl shadow"
       style={{ background: 'var(--bg-sidebar)', border: '1px solid var(--border)', overflowX: 'auto' }}
@@ -187,6 +218,7 @@ export default function OfferingsTable({ offerings }: { offerings: Offering[] })
           )}
         </tbody>
       </table>
+    </div>
     </div>
   )
 }

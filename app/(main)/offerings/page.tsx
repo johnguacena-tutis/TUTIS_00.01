@@ -32,7 +32,6 @@ async function getOfferings() {
     .from('offerings')
     .select('offering_id, number_enrolled, available_places, archived')
     .in('offering_id', offeringIds)
-    .eq('archived', false)
 
   if (oErr) { console.error(oErr); return [] }
 
@@ -58,7 +57,9 @@ async function getOfferings() {
     ])
   )
 
-  // Step 4 — merge, only include non-archived offerings
+  const now = new Date()
+
+  // Step 4 — merge all offerings including archived
   return versions
     .filter((v) => offeringMap[v.offering_id])
     .map((v) => ({
@@ -70,6 +71,7 @@ async function getOfferings() {
       available_places: offeringMap[v.offering_id]?.available_places ?? null,
       start_timestamp: v.start_timestamp,
       end_timestamp: v.end_timestamp,
+      archived: offeringMap[v.offering_id]?.archived ?? false,
       trainer_name: v.default_trainer_person_id
         ? trainerMap[v.default_trainer_person_id] ?? null
         : null,
@@ -78,21 +80,26 @@ async function getOfferings() {
 
 export default async function OfferingsPage() {
   const offerings = await getOfferings()
+  const now = new Date()
+
+  const counts = {
+    all:       offerings.length,
+    active:    offerings.filter((o) => !o.archived && (o.end_timestamp === null || new Date(o.end_timestamp) >= now)).length,
+    completed: offerings.filter((o) => !o.archived && o.end_timestamp !== null && new Date(o.end_timestamp) < now).length,
+    archived:  offerings.filter((o) => o.archived).length,
+  }
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
             Offerings
           </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-            {offerings.length} records
-          </p>
         </div>
         <AddOfferingButton />
       </div>
-      <OfferingsTable offerings={offerings} />
+      <OfferingsTable offerings={offerings} counts={counts} />
     </div>
   )
 }

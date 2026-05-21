@@ -5,6 +5,7 @@ import { Eye, Pencil, Archive, ChevronDown } from 'lucide-react'
 import Accordion from './Accordion'
 import { useTheme } from './ThemeProvider'
 import { can, type Permission } from '@/lib/permissions'
+import StatusFilter, { studentPills, type StudentFilter } from './StatusFilter'
 
 type Student = {
   person_id: number
@@ -14,6 +15,8 @@ type Student = {
   date_of_birth: string | null
   organisation_id: number | null
   position_id: number | null
+  archived: boolean
+  status: string | null
 }
 
 const allActions: { label: string; icon: React.ReactNode; color: string; permission: Permission }[] = [
@@ -31,10 +34,17 @@ type Filters = {
   position_id: string
 }
 
-export default function StudentsTable({ students }: { students: Student[] }) {
+export default function StudentsTable({
+  students,
+  counts,
+}: {
+  students: Student[]
+  counts: Record<StudentFilter, number>
+}) {
   const { role } = useTheme()
   const actions = allActions.filter((a) => can(role, a.permission))
   const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [activeFilter, setActiveFilter] = useState<StudentFilter>('active')
   const [filters, setFilters] = useState<Filters>({
     code: '',
     first_name: '',
@@ -50,7 +60,14 @@ export default function StudentsTable({ students }: { students: Student[] }) {
     setFilters((prev) => ({ ...prev, [key]: value }))
   }
 
-  const filtered = students.filter((s) => {
+  const statusFiltered = students.filter((s) => {
+    if (activeFilter === 'active')   return s.status === 'ACTIVE'   && !s.archived
+    if (activeFilter === 'inactive') return s.status === 'INACTIVE' && !s.archived
+    if (activeFilter === 'archived') return s.archived
+    return true
+  })
+
+  const filtered = statusFiltered.filter((s) => {
     return (
       (s.code ?? '').toLowerCase().includes(filters.code.toLowerCase()) &&
       (s.first_name ?? '').toLowerCase().includes(filters.first_name.toLowerCase()) &&
@@ -73,6 +90,19 @@ export default function StudentsTable({ students }: { students: Student[] }) {
   }
 
   return (
+    <div>
+      <div className="mb-4 flex items-center justify-between">
+        <StatusFilter
+          pills={studentPills}
+          current={activeFilter}
+          counts={counts}
+          onChange={(f) => { setActiveFilter(f as StudentFilter); setExpandedId(null) }}
+        />
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          {filtered.length} records
+        </p>
+      </div>
+
     <div
       className="rounded-xl shadow"
       style={{ background: 'var(--bg-sidebar)', border: '1px solid var(--border)', overflowX: 'auto' }}
@@ -222,6 +252,7 @@ export default function StudentsTable({ students }: { students: Student[] }) {
           )}
         </tbody>
       </table>
+    </div>
     </div>
   )
 }

@@ -19,11 +19,11 @@ async function getStudents() {
       date_of_birth,
       organisation_id,
       position_id,
-      archived
+      archived,
+      status
     `)
-    .eq('archived', false)
     .order('surname', { ascending: true })
-    .limit(50)
+    .limit(200)
 
   if (error) {
     console.error(error)
@@ -35,20 +35,24 @@ async function getStudents() {
 export default async function StudentsPage() {
   const students = await getStudents()
 
+  const counts = {
+    all:      students.length,
+    active:   students.filter((s) => s.status === 'ACTIVE'   && !s.archived).length,
+    inactive: students.filter((s) => s.status === 'INACTIVE' && !s.archived).length,
+    archived: students.filter((s) => s.archived).length,
+  }
+
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
             Students
           </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-            {students.length} records
-          </p>
         </div>
         <AddStudentButton />
       </div>
-      <StudentsTable students={students} />
+      <StudentsTable students={students} counts={counts} />
     </div>
   )
 }

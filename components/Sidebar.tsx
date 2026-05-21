@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import { useTheme } from './ThemeProvider'
 import Accordion from './Accordion'
 import Image from 'next/image'
 import { type Role } from './ThemeProvider'
+import LogoutButton from './LogoutButton'
 import { can, canAny, type Permission } from '@/lib/permissions'
 import {
   UserSquare2,
@@ -16,7 +17,6 @@ import {
   PanelLeftClose,
   Home,
   Settings,
-  LogOut,
   Sun,
   Moon,
   Shield,
@@ -60,12 +60,25 @@ const menuItems: MenuItem[] = [
 export default function Sidebar() {
   const { theme, toggleTheme: toggle, role, setRole } = useTheme()
   const router = useRouter()
+  const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [openMenus, setOpenMenus] = useState<string[]>([])
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   const dark = theme === 'dark'
   const [roleOpen, setRoleOpen] = useState(false)
+
+  // Auto-open the parent menu group that contains the active route
+  useEffect(() => {
+    menuItems.forEach((item) => {
+      const isActive = item.children.some((c) => pathname.startsWith(c.href))
+      if (isActive) {
+        setOpenMenus((prev) =>
+          prev.includes(item.label) ? prev : [...prev, item.label]
+        )
+      }
+    })
+  }, [pathname])
 
   const toggleMenu = (label: string) => {
     if (collapsed) return
@@ -146,14 +159,19 @@ export default function Sidebar() {
           )
           if (visibleChildren.length === 0) return null
           const isOpen = openMenus.includes(item.label)
+          const isActive = item.children.some((c) => pathname.startsWith(c.href))
           return (
             <div key={item.label}>
               <button
                 onClick={() => toggleMenu(item.label)}
-                style={{ color: 'var(--text-primary)' }}
+                style={{
+                  color: isActive ? '#7c3aed' : 'var(--text-primary)',
+                  background: isActive ? 'rgba(124,58,237,0.08)' : 'transparent',
+                  borderLeft: isActive ? '3px solid #7c3aed' : '3px solid transparent',
+                }}
                 className="w-full flex items-center gap-3 px-4 py-3 transition"
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-sidebar-hover)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'var(--bg-sidebar-hover)' }}
+                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
               >
                 <span style={{ color: 'var(--text-muted)' }}>{item.icon}</span>
                 {!collapsed && (
@@ -176,18 +194,25 @@ export default function Sidebar() {
               {!collapsed && (
                 <Accordion open={isOpen}>
                   <div style={{ background: 'var(--bg-sub)' }}>
-                    {visibleChildren.map((child) => (
-                      <button
-                        key={child.href}
-                        onClick={() => router.push(child.href)}
-                        style={{ color: 'var(--text-muted)' }}
-                        className="w-full text-left px-10 py-2 text-sm transition"
-                        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-sidebar-hover)')}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                      >
-                        {child.label}
-                      </button>
-                    ))}
+                    {visibleChildren.map((child) => {
+                      const childActive = pathname.startsWith(child.href)
+                      return (
+                        <button
+                          key={child.href}
+                          onClick={() => router.push(child.href)}
+                          style={{
+                            color: childActive ? '#7c3aed' : 'var(--text-muted)',
+                            fontWeight: childActive ? 600 : 400,
+                            background: childActive ? 'rgba(124,58,237,0.08)' : 'transparent',
+                          }}
+                          className="w-full text-left px-10 py-2 text-sm transition"
+                          onMouseEnter={(e) => { if (!childActive) e.currentTarget.style.background = 'var(--bg-sidebar-hover)' }}
+                          onMouseLeave={(e) => { if (!childActive) e.currentTarget.style.background = childActive ? 'rgba(124,58,237,0.08)' : 'transparent' }}
+                        >
+                          {child.label}
+                        </button>
+                      )
+                    })}
                   </div>
                 </Accordion>
               )}
@@ -283,16 +308,7 @@ export default function Sidebar() {
                 </div>
               </Accordion>
 
-              <button
-                onClick={() => router.push('/login')}
-                style={{ color: '#ef4444' }}
-                className="w-full flex items-center gap-3 px-4 py-2 text-sm transition"
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-sidebar-hover)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-              >
-                <LogOut size={16} />
-                <span>Logout</span>
-              </button>
+              <LogoutButton />
             </div>
           </Accordion>
         )}
