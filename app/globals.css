@@ -24,6 +24,10 @@
   transition: background-color 0.2s, color 0.2s, border-color 0.2s;
 }
 
+button {
+  cursor: pointer;
+}
+
 body {
   margin: 0;
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;

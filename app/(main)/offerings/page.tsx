@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import OfferingsTable from '@/components/OfferingsTable'
 import AddOfferingButton from '@/components/AddOfferingButton'
+import TableHeader from '@/components/TableHeader'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,9 +10,9 @@ const supabase = createClient(
 )
 
 async function getOfferings() {
-  // Step 1 — get offering versions
+  // Step 1 — get current offering versions (one per offering)
   const { data: versions, error: vErr } = await supabase
-    .from('offeringversions')
+    .from('offeringversions_current')
     .select(`
       offering_version_id,
       offering_id,
@@ -22,7 +23,7 @@ async function getOfferings() {
       default_trainer_person_id
     `)
     .order('start_timestamp', { ascending: false })
-    .limit(50)
+    .limit(200)
 
   if (vErr || !versions) { console.error(vErr); return [] }
 
@@ -91,14 +92,9 @@ export default async function OfferingsPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-            Offerings
-          </h1>
-        </div>
+      <TableHeader title="Offerings" count={offerings.length} favKey="offerings">
         <AddOfferingButton />
-      </div>
+      </TableHeader>
       <OfferingsTable offerings={offerings} counts={counts} />
     </div>
   )

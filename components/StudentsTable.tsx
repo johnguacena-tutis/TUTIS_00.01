@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, Fragment } from 'react'
-import { Eye, Pencil, Archive, ChevronDown } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Eye, Pencil, Archive, ArchiveRestore, ChevronDown } from 'lucide-react'
 import Accordion from './Accordion'
 import { useTheme } from './ThemeProvider'
 import { can, type Permission } from '@/lib/permissions'
 import StatusFilter, { studentPills, type StudentFilter } from './StatusFilter'
+import ArchiveConfirmModal from './ArchiveConfirmModal'
 
 type Student = {
   person_id: number
@@ -25,6 +27,11 @@ const allActions: { label: string; icon: React.ReactNode; color: string; permiss
   { label: 'Archive', icon: <Archive size={14} />, color: '#ef4444', permission: 'students.archive' },
 ]
 
+const archivedActions: { label: string; icon: React.ReactNode; color: string; permission: Permission }[] = [
+  { label: 'View',      icon: <Eye size={14} />,            color: '#6366f1', permission: 'students.view' },
+  { label: 'Unarchive', icon: <ArchiveRestore size={14} />, color: '#10b981', permission: 'students.unarchive' },
+]
+
 type Filters = {
   code: string
   first_name: string
@@ -42,8 +49,14 @@ export default function StudentsTable({
   counts: Record<StudentFilter, number>
 }) {
   const { role } = useTheme()
-  const actions = allActions.filter((a) => can(role, a.permission))
+  const router = useRouter()
+
+  const getActions = (s: Student) => {
+    const base = s.archived ? archivedActions : allActions
+    return base.filter((a) => can(role, a.permission))
+  }
   const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [archiveTarget, setArchiveTarget] = useState<{ id: number; name: string } | null>(null)
   const [activeFilter, setActiveFilter] = useState<StudentFilter>('active')
   const [filters, setFilters] = useState<Filters>({
     code: '',
@@ -220,9 +233,18 @@ export default function StudentsTable({
                     <td colSpan={7} style={{ padding: 0, borderBottom: isOpen ? '1px solid var(--border)' : 'none' }}>
                       <Accordion open={isOpen}>
                         <div className="flex items-center gap-3 px-6 py-3">
-                          {actions.map((action) => (
+                          {getActions(s).map((action) => (
                             <button
                               key={action.label}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (action.permission === 'students.view') router.push(`/students/${s.person_id}`)
+                                if (action.permission === 'students.edit') router.push(`/students/${s.person_id}?edit=true`)
+                                if (action.permission === 'students.archive') setArchiveTarget({
+                                  id: s.person_id,
+                                  name: [s.first_name, s.surname].filter(Boolean).join(' ') || 'this student',
+                                })
+                              }}
                               className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition"
                               style={{
                                 color: action.color,
@@ -253,6 +275,14 @@ export default function StudentsTable({
         </tbody>
       </table>
     </div>
+
+    {archiveTarget && (
+      <ArchiveConfirmModal
+        name={archiveTarget.name}
+        onConfirm={() => console.log('Archive student', archiveTarget.id)}
+        onClose={() => setArchiveTarget(null)}
+      />
+    )}
     </div>
   )
 }

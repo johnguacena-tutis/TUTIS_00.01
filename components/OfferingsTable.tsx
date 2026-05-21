@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, Fragment } from 'react'
-import { Eye, Pencil, UserPlus, ChevronDown } from 'lucide-react'
+import { Eye, Pencil, UserPlus, Settings2, Archive, ArchiveRestore, ChevronDown } from 'lucide-react'
 import { useTheme } from './ThemeProvider'
 import { can, type Permission } from '@/lib/permissions'
 import Accordion from './Accordion'
 import StatusFilter, { offeringPills, type OfferingFilter } from './StatusFilter'
+import OfferingEnrolmentModal from './OfferingEnrolmentModal'
+import ArchiveConfirmModal from './ArchiveConfirmModal'
 
 type Offering = {
   offering_version_id: number
@@ -21,9 +23,20 @@ type Offering = {
 }
 
 const allActions: { label: string; icon: React.ReactNode; color: string; permission: Permission }[] = [
-  { label: 'View',           icon: <Eye size={14} />,      color: '#6366f1', permission: 'offerings.view' },
-  { label: 'Edit',           icon: <Pencil size={14} />,   color: '#f59e0b', permission: 'offerings.edit' },
-  { label: 'Add Enrolment',  icon: <UserPlus size={14} />, color: '#10b981', permission: 'offerings.add_enrolment' },
+  { label: 'Manage',        icon: <Settings2 size={14} />, color: '#8b5cf6', permission: 'offerings.manage' },
+  { label: 'Add Enrolment', icon: <UserPlus size={14} />,  color: '#10b981', permission: 'offerings.add_enrolment' },
+  { label: 'Edit',          icon: <Pencil size={14} />,    color: '#f59e0b', permission: 'offerings.edit' },
+  { label: 'View',          icon: <Eye size={14} />,       color: '#6366f1', permission: 'offerings.view' },
+  { label: 'Archive',       icon: <Archive size={14} />,   color: '#ef4444', permission: 'offerings.archive' },
+]
+
+const archivedActions: { label: string; icon: React.ReactNode; color: string; permission: Permission }[] = [
+  { label: 'View',      icon: <Eye size={14} />,            color: '#6366f1', permission: 'offerings.view' },
+  { label: 'Unarchive', icon: <ArchiveRestore size={14} />, color: '#10b981', permission: 'offerings.unarchive' },
+]
+
+const completedActions: { label: string; icon: React.ReactNode; color: string; permission: Permission }[] = [
+  { label: 'View', icon: <Eye size={14} />, color: '#6366f1', permission: 'offerings.view' },
 ]
 
 type Filters = {
@@ -48,9 +61,16 @@ export default function OfferingsTable({
   counts: Record<OfferingFilter, number>
 }) {
   const { role } = useTheme()
-  const actions = allActions.filter((a) => can(role, a.permission))
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [activeFilter, setActiveFilter] = useState<OfferingFilter>('active')
+
+  const getActions = (o: Offering) => {
+    if (o.archived) return archivedActions.filter((a) => can(role, a.permission))
+    if (o.end_timestamp && new Date(o.end_timestamp) < now) return completedActions.filter((a) => can(role, a.permission))
+    return allActions.filter((a) => can(role, a.permission))
+  }
+  const [enrolModal, setEnrolModal] = useState<{ title: string; code: string | null } | null>(null)
+  const [archiveTarget, setArchiveTarget] = useState<{ id: number; name: string } | null>(null)
   const [filters, setFilters] = useState<Filters>({
     code: '',
     title: '',
@@ -103,6 +123,7 @@ export default function OfferingsTable({
   ]
 
   return (
+    <>
     <div>
       <div className="mb-4 flex items-center justify-between">
         <StatusFilter
@@ -196,9 +217,18 @@ export default function OfferingsTable({
                     <td colSpan={7} style={{ padding: 0, borderBottom: isOpen ? '1px solid var(--border)' : 'none' }}>
                       <Accordion open={isOpen}>
                         <div className="flex items-center gap-3 px-6 py-3">
-                          {actions.map((action) => (
+                          {getActions(o).map((action) => (
                             <button
                               key={action.label}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (action.permission === 'offerings.add_enrolment') {
+                                  setEnrolModal({ title: o.title ?? 'Offering', code: o.code })
+                                }
+                                if (action.permission === 'offerings.archive') {
+                                  setArchiveTarget({ id: o.offering_id, name: o.title ?? 'this offering' })
+                                }
+                              }}
                               className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition"
                               style={{ color: action.color, border: `1px solid ${action.color}`, background: 'transparent' }}
                               onMouseEnter={(e) => { e.currentTarget.style.background = action.color; e.currentTarget.style.color = '#fff' }}
@@ -220,5 +250,22 @@ export default function OfferingsTable({
       </table>
     </div>
     </div>
+
+    {enrolModal && (
+      <OfferingEnrolmentModal
+        offeringTitle={enrolModal.title}
+        offeringCode={enrolModal.code}
+        onClose={() => setEnrolModal(null)}
+      />
+    )}
+
+    {archiveTarget && (
+      <ArchiveConfirmModal
+        name={archiveTarget.name}
+        onConfirm={() => console.log('Archive offering', archiveTarget.id)}
+        onClose={() => setArchiveTarget(null)}
+      />
+    )}
+    </>
   )
 }

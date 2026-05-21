@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import StudentsTable from '@/components/StudentsTable'
 import AddStudentButton from '@/components/AddStudentButton'
+import TableHeader from '@/components/TableHeader'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -44,14 +45,9 @@ export default async function StudentsPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-            Students
-          </h1>
-        </div>
+      <TableHeader title="Students" count={students.length} favKey="students">
         <AddStudentButton />
-      </div>
+      </TableHeader>
       <StudentsTable students={students} counts={counts} />
     </div>
   )

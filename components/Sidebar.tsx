@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useTheme } from './ThemeProvider'
 import Accordion from './Accordion'
@@ -41,18 +41,18 @@ const menuItems: MenuItem[] = [
     label: 'Training & Assessment',
     icon: <ClipboardList size={20} />,
     children: [
-      { label: 'Training Objects', href: '/training/objects' },
-      { label: 'Assessments', href: '/training/assessments' },
-      { label: 'Results', href: '/training/results' },
+      { label: 'Training Objects', href: '/coming-soon?section=Training+Objects' },
+      { label: 'Assessments',      href: '/coming-soon?section=Assessments' },
+      { label: 'Results',          href: '/coming-soon?section=Results' },
     ],
   },
   {
     label: 'Content Development',
     icon: <BookOpen size={20} />,
     children: [
-      { label: 'Courses', href: '/content/courses' },
-      { label: 'Modules', href: '/content/modules' },
-      { label: 'Topics', href: '/content/topics' },
+      { label: 'Courses', href: '/coming-soon?section=Courses' },
+      { label: 'Modules', href: '/coming-soon?section=Modules' },
+      { label: 'Topics',  href: '/coming-soon?section=Topics' },
     ],
   },
 ]
@@ -67,6 +67,18 @@ export default function Sidebar() {
 
   const dark = theme === 'dark'
   const [roleOpen, setRoleOpen] = useState(false)
+  const settingsSectionRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (settingsOpen && settingsSectionRef.current && !settingsSectionRef.current.contains(e.target as Node)) {
+        setSettingsOpen(false)
+        setRoleOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [settingsOpen])
 
   // Auto-open the parent menu group that contains the active route
   useEffect(() => {
@@ -222,7 +234,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Bottom — Settings accordion */}
-      <div style={{ borderTop: '1px solid var(--border)' }} className="p-2">
+      <div ref={settingsSectionRef} style={{ borderTop: '1px solid var(--border)' }} className="p-2">
         <button
           onClick={() => !collapsed && setSettingsOpen(!settingsOpen)}
           style={{ color: 'var(--text-primary)' }}

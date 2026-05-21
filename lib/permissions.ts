@@ -9,6 +9,10 @@ export type Permission =
   | 'offerings.create'
   | 'offerings.edit'
   | 'offerings.add_enrolment'
+  | 'offerings.manage'
+  | 'offerings.archive'
+  | 'offerings.unarchive'
+  | 'students.unarchive'
 
 const rolePermissions: Record<Role, Permission[]> = {
   super_user: [
@@ -20,12 +24,17 @@ const rolePermissions: Record<Role, Permission[]> = {
     'offerings.create',
     'offerings.edit',
     'offerings.add_enrolment',
+    'offerings.manage',
+    'offerings.archive',
+    'offerings.unarchive',
+    'students.unarchive',
   ],
   read_write: [
     'students.view',
     'students.edit',
     'offerings.view',
     'offerings.edit',
+    'offerings.manage',
   ],
   read_only: [
     'students.view',
