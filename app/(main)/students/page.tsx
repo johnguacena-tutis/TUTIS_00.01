@@ -1,37 +1,7 @@
-import { createClient } from '@supabase/supabase-js'
-import StudentsTable from '@/components/StudentsTable'
-import AddStudentButton from '@/components/AddStudentButton'
-import TableHeader from '@/components/TableHeader'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  { db: { schema: 'enterprise_uat' } }
-)
-
-async function getStudents() {
-  const { data, error } = await supabase
-    .from('persons')
-    .select(`
-      person_id,
-      code,
-      first_name,
-      surname,
-      date_of_birth,
-      organisation_id,
-      position_id,
-      archived,
-      status
-    `)
-    .order('surname', { ascending: true })
-    .limit(200)
-
-  if (error) {
-    console.error(error)
-    return []
-  }
-  return data ?? []
-}
+import { getStudents } from '@/features/students/queries'
+import StudentsTable from '@/features/students/components/StudentsTable'
+import AddStudentButton from '@/features/students/components/AddStudentButton'
+import TableHeader from '@/components/ui/TableHeader'
 
 export default async function StudentsPage() {
   const students = await getStudents()

@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react'
 
 export type WidgetSize = 'half' | 'full'
-export type StudentWidgetFilter = 'all' | 'active' | 'inactive' | 'archived'
-export type OfferingWidgetFilter = 'all' | 'active' | 'completed' | 'archived'
 
 export type WidgetSettings = {
   size: WidgetSize

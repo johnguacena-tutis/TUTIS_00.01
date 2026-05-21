@@ -1,4 +1,4 @@
-import type { Role } from '@/components/ThemeProvider'
+import type { Role } from '@/components/layout/ThemeProvider'
 
 export type Permission =
   | 'students.view'

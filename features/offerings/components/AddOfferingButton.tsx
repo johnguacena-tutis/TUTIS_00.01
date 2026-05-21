@@ -1,6 +1,6 @@
 'use client'
 
-import { useTheme } from './ThemeProvider'
+import { useTheme } from '@/components/layout/ThemeProvider'
 import { can } from '@/lib/permissions'
 
 export default function AddOfferingButton() {

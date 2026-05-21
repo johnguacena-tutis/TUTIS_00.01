@@ -15,25 +15,16 @@ export default function Accordion({
   useEffect(() => {
     if (!ref.current) return
     if (!open) { setHeight(0); return }
-
-    // Use ResizeObserver so height updates whenever inner content changes
     const observer = new ResizeObserver(() => {
       if (ref.current) setHeight(ref.current.scrollHeight)
     })
     observer.observe(ref.current)
     setHeight(ref.current.scrollHeight)
-
     return () => observer.disconnect()
   }, [open])
 
   return (
-    <div
-      style={{
-        height: `${height}px`,
-        overflow: 'hidden',
-        transition: 'height 0.25s ease',
-      }}
-    >
+    <div style={{ height: `${height}px`, overflow: 'hidden', transition: 'height 0.25s ease' }}>
       <div ref={ref}>{children}</div>
     </div>
   )

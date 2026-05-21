@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import SearchWidget from './SearchWidget'
-import { useWidgetSettings } from '@/lib/useWidgetSettings'
+import { useWidgetSettings } from '../hooks/useWidgetSettings'
 
 function WidgetWrapper({ type }: { type: 'students' | 'offerings' }) {
   const { settings } = useWidgetSettings(type)
@@ -51,10 +51,8 @@ export default function DashboardClient() {
           {offeringsPin && <WidgetWrapper type="offerings" />}
         </div>
       ) : (
-        <div
-          className="rounded-xl p-12 text-center"
-          style={{ background: 'var(--bg-sidebar)', border: '1px dashed var(--border)' }}
-        >
+        <div className="rounded-xl p-12 text-center"
+          style={{ background: 'var(--bg-sidebar)', border: '1px dashed var(--border)' }}>
           <p className="text-4xl mb-3">⭐</p>
           <p className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>No widgets pinned</p>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
