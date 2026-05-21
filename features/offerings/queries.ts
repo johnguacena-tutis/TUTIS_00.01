@@ -1,13 +1,16 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Offering } from './types'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  { db: { schema: 'enterprise_uat' } }
-)
+function getClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { db: { schema: 'enterprise_uat' } }
+  )
+}
 
 export async function getOfferings(): Promise<Offering[]> {
+  const supabase = getClient()
   const { data: versions, error: vErr } = await supabase
     .from('offeringversions_current')
     .select('offering_version_id, offering_id, code, title, start_timestamp, end_timestamp, default_trainer_person_id')

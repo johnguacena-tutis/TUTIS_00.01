@@ -1,13 +1,16 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Student, StudentDetail, Enrolment } from './types'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  { db: { schema: 'enterprise_uat' } }
-)
+function getClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { db: { schema: 'enterprise_uat' } }
+  )
+}
 
 export async function getStudents(): Promise<Student[]> {
+  const supabase = getClient()
   const { data, error } = await supabase
     .from('persons')
     .select(`
@@ -23,6 +26,7 @@ export async function getStudents(): Promise<Student[]> {
 }
 
 export async function getStudent(id: number): Promise<StudentDetail | null> {
+  const supabase = getClient()
   const { data, error } = await supabase
     .from('persons')
     .select(`
@@ -38,6 +42,7 @@ export async function getStudent(id: number): Promise<StudentDetail | null> {
 }
 
 export async function getStudentEmail(id: number): Promise<string | null> {
+  const supabase = getClient()
   const { data } = await supabase
     .from('personemailaddresses_default')
     .select('email_address')
@@ -47,6 +52,7 @@ export async function getStudentEmail(id: number): Promise<string | null> {
 }
 
 export async function getEnrolments(id: number): Promise<Enrolment[]> {
+  const supabase = getClient()
   const { data, error } = await supabase
     .from('enrolments')
     .select(`
@@ -83,18 +89,18 @@ export async function getEnrolments(id: number): Promise<Enrolment[]> {
   const tovMap      = Object.fromEntries((tovs ?? []).map((t: any) => [t.training_object_version_id, t.title]))
 
   return data.map((e: any) => {
-    const ev      = e.enrolmentversions_current
+    const ev       = e.enrolmentversions_current
     const offering = offeringMap[ev?.offering_id]
     const rawStatus = e.enrolments_statuses?.status ?? ''
     const status = rawStatus.replace('#{label_', '').replace('}', '')
     return {
-      enrolment_id:        e.enrolment_id,
-      code:                ev?.code ?? null,
+      enrolment_id:         e.enrolment_id,
+      code:                 ev?.code ?? null,
       qualification_course: offering ? (tovMap[offering.training_object_version_id] ?? null) : null,
-      offering_code:       offering?.code ?? null,
-      trainer:             ev?.trainer_person_id ? trainerMap[ev.trainer_person_id] ?? null : null,
-      started:             ev?.enrolment_date ?? null,
-      end_date:            ev?.planned_completion_date ?? null,
+      offering_code:        offering?.code ?? null,
+      trainer:              ev?.trainer_person_id ? trainerMap[ev.trainer_person_id] ?? null : null,
+      started:              ev?.enrolment_date ?? null,
+      end_date:             ev?.planned_completion_date ?? null,
       status,
     }
   })
