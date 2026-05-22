@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Fragment } from 'react'
 import { X, ChevronRight, ChevronLeft, Check } from 'lucide-react'
 import { createClient } from '@supabase/supabase-js'
 
@@ -172,9 +172,9 @@ export default function OfferingEnrolmentModal({ offeringTitle, offeringCode, on
                         const selected = isSelected(s.person_id)
                         const showDivider = !selected && idx > 0 && isSelected(filtered[idx - 1].person_id)
                         return (
-                          <>
+                          <Fragment key={s.person_id}>
                             {showDivider && (
-                              <tr key={`divider-${s.person_id}`}>
+                              <tr>
                                 <td colSpan={5} className="px-4 py-1 text-xs font-semibold"
                                   style={{ background: 'var(--bg-sub)', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>
                                   Other Students
@@ -193,7 +193,7 @@ export default function OfferingEnrolmentModal({ offeringTitle, offeringCode, on
                               <td className="px-4 py-2" style={{ color: selected ? '#7c3aed' : 'var(--text-primary)' }}>{s.surname ?? '—'}</td>
                               <td className="px-4 py-2" style={{ color: 'var(--text-muted)' }}>{formatDate(s.date_of_birth)}</td>
                             </tr>
-                          </>
+                          </Fragment>
                         )
                       })}
                     </tbody>
