@@ -2,13 +2,7 @@
 
 import { useState, useEffect, useRef, Fragment } from 'react'
 import { X, ChevronRight, ChevronLeft, Check } from 'lucide-react'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  { db: { schema: 'enterprise_uat' } }
-)
+import { getSupabase } from '@/lib/supabase'
 
 type Student = {
   person_id: number
@@ -59,7 +53,7 @@ export default function OfferingEnrolmentModal({ offeringTitle, offeringCode, on
   useEffect(() => {
     async function fetchStudents() {
       setLoading(true)
-      const { data } = await supabase.from('persons')
+      const { data } = await getSupabase().from('persons')
         .select('person_id, code, first_name, surname, date_of_birth')
         .eq('archived', false).order('surname', { ascending: true }).limit(200)
       setStudents(data ?? [])

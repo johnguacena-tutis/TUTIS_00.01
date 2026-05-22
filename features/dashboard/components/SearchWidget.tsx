@@ -4,15 +4,9 @@ import { useState, useEffect, useRef } from 'react'
 import { Star, Settings, ChevronDown, Settings2, X, ArrowUpRight, Trash2 } from 'lucide-react'
 import { useFavorites } from '../hooks/useFavorites'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabase } from '@/lib/supabase'
 import Accordion from '@/components/ui/Accordion'
 import { useWidgetSettings } from '../hooks/useWidgetSettings'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  { db: { schema: 'enterprise_uat' } }
-)
 
 type WidgetType = 'students' | 'offerings'
 
@@ -39,7 +33,7 @@ const FILTERS: Record<WidgetType, { label: string; value: string }[]> = {
 }
 
 async function searchStudents(q: string, filter: string): Promise<Result[]> {
-  let query = supabase.from('persons')
+  let query = getSupabase().from('persons')
     .select('person_id, code, first_name, surname, archived, status')
     .or(`first_name.ilike.%${q}%,surname.ilike.%${q}%,code.ilike.%${q}%`)
     .limit(10)
@@ -51,14 +45,14 @@ async function searchStudents(q: string, filter: string): Promise<Result[]> {
 }
 
 async function searchOfferings(q: string, filter: string): Promise<Result[]> {
-  const { data: versions } = await supabase.from('offeringversions_current')
+  const { data: versions } = await getSupabase().from('offeringversions_current')
     .select('offering_id, code, title, start_timestamp, end_timestamp')
     .or(`title.ilike.%${q}%,code.ilike.%${q}%`).limit(50)
 
   const offeringIds = [...new Set((versions ?? []).map((v: any) => v.offering_id))]
   if (!offeringIds.length) return []
 
-  const { data: offs } = await supabase.from('offerings').select('offering_id, archived').in('offering_id', offeringIds)
+  const { data: offs } = await getSupabase().from('offerings').select('offering_id, archived').in('offering_id', offeringIds)
   const archiveMap = Object.fromEntries((offs ?? []).map((o: any) => [o.offering_id, o.archived]))
   const now = new Date()
 

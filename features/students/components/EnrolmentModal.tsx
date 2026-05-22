@@ -2,13 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { X, ChevronRight, ChevronLeft, Check } from 'lucide-react'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  { db: { schema: 'enterprise_uat' } }
-)
+import { getSupabase } from '@/lib/supabase'
 
 type Offering = {
   offering_version_id: number
@@ -62,13 +56,13 @@ export default function EnrolmentModal({ studentName, onClose }: { studentName: 
   useEffect(() => {
     async function fetchOfferings() {
       setLoading(true)
-      const { data: versions } = await supabase.from('offeringversions_current')
+      const { data: versions } = await getSupabase().from('offeringversions_current')
         .select('offering_version_id, offering_id, code, title, start_timestamp, end_timestamp, default_trainer_person_id')
         .order('title', { ascending: true }).limit(200)
 
       const offeringIds = [...new Set((versions ?? []).map((v: any) => v.offering_id))]
       const { data: offs } = offeringIds.length
-        ? await supabase.from('offerings').select('offering_id, archived').in('offering_id', offeringIds).eq('archived', false)
+        ? await getSupabase().from('offerings').select('offering_id, archived').in('offering_id', offeringIds).eq('archived', false)
         : { data: [] }
 
       const activeIds = new Set((offs ?? []).map((o: any) => o.offering_id))
@@ -79,7 +73,7 @@ export default function EnrolmentModal({ studentName, onClose }: { studentName: 
 
       const trainerIds = [...new Set(active.map((v: any) => v.default_trainer_person_id).filter(Boolean))]
       const { data: trainers } = trainerIds.length
-        ? await supabase.from('persons').select('person_id, first_name, surname').in('person_id', trainerIds)
+        ? await getSupabase().from('persons').select('person_id, first_name, surname').in('person_id', trainerIds)
         : { data: [] }
       const trainerMap = Object.fromEntries((trainers ?? []).map((p: any) => [p.person_id, `${p.first_name ?? ''} ${p.surname ?? ''}`.trim()]))
 
