@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { notFound } from 'next/navigation'
 import { getStudent, getStudentEmail, getEnrolments } from '@/features/students/queries'
 import StudentDetail from '@/features/students/components/StudentDetail'

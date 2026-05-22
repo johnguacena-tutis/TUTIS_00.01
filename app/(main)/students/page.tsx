@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { getStudents } from '@/features/students/queries'
 import StudentsTable from '@/features/students/components/StudentsTable'
 import AddStudentButton from '@/features/students/components/AddStudentButton'

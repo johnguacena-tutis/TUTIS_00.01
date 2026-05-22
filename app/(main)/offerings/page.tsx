@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { getOfferings } from '@/features/offerings/queries'
 import OfferingsTable from '@/features/offerings/components/OfferingsTable'
 import AddOfferingButton from '@/features/offerings/components/AddOfferingButton'
